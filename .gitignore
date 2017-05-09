@@ -10,6 +10,9 @@ lib-cov
 pids
 logs
 results
-
+.idea
 node_modules
 bower_components
+/.happypack/
+/static/dist/
+webpack-assets.json

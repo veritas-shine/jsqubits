@@ -15,7 +15,7 @@
         function (jsqubits, jsqubitsmath) {
             var qstate = jsqubits('|0>').hadamard(0).T(0);
             document.getElementById("jsqubitsResult").innerHTML = qstate.toString();
-            document.getElementById("powerModResult").innerHTML = jsqubitsmath.powerMod(234, 756, 15).toString();
+            document.getElementById("powerModResult").innerHTML = jsqubitsmath.powerMod(2, 10, 100).toString();
         }
     );
 })();
