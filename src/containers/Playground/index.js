@@ -3,13 +3,12 @@
  */
 import React, {Component} from 'react';
 import superagent from 'superagent';
+import Q from 'lib/Q';
 
 let codeMirror = null;
 if (__CLIENT__) {
   codeMirror = require('codemirror');
   require('codemirror/mode/javascript/javascript');
-  require('../../../lib/jsqubits');
-  require('../../../lib/jsqubitsmath');
 }
 
 export default
@@ -20,6 +19,9 @@ class extends Component {
       code: '',
       result: ''
     };
+
+    const qstate = new Q('|0>').hadamard(0).T(0);
+    console.log(24, qstate.toString(), Q.powerMod(234, 756, 15).toString());
   }
 
   componentDidMount() {

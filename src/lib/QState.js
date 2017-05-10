@@ -25,7 +25,7 @@ function _applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
   const statesThatCanBeSkipped = {};
   const targetBitMask = 1 << targetBit;
   const controlBitMask = createBitMask(controlBits);
-  qState.each(function (stateWithAmplitude) {
+  qState.each(stateWithAmplitude => {
     const state = stateWithAmplitude.asNumber();
     if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
     statesThatCanBeSkipped[state ^ targetBitMask] = true;

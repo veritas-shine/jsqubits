@@ -45,7 +45,7 @@ export default class Q {
   /**
    * Greatest common divisor
    */
-  static gcd = function (a, b) {
+  static gcd = (a, b) => {
     while (b !== 0) {
       const c = a % b;
       a = b;
@@ -57,7 +57,7 @@ export default class Q {
   /**
    * Least common multiple
    */
-  static lcm = function (a, b) {
+  static lcm = (a, b) => {
     return a * b / this.gcd(a, b);
   };
 
@@ -69,8 +69,9 @@ export default class Q {
    * an array of the quotients making up the continued fraction whose value is within the specified precision of the targetValue,
    * and where numerator and denominator are the integer values to which the continued fraction evaluates.
    */
-  static continuedFraction = function (targetValue, precision) {
-    let firstValue, remainder;
+  static continuedFraction = (targetValue, precision) => {
+    let firstValue;
+    let remainder;
     if (Math.abs(targetValue) >= 1) {
       firstValue = roundTowardsZero(targetValue);
       remainder = targetValue - firstValue;
@@ -110,8 +111,7 @@ export default class Q {
    * whose bit values are the entries of a matrix rowIndex.
    * @param width the width of the matrix.
    */
-  static findNullSpaceMod2 = (function () {
-
+  static findNullSpaceMod2 = (() => {
     /**
      * Try to make row pivotRowIndex / column colIndex a pivot
      * swapping rows if necessary.
@@ -191,7 +191,7 @@ export default class Q {
       return results;
     }
 
-    return function (a, width) {
+    return (a, width) => {
       a = a.slice(0);
       const pivotColumnIndexes = [];
       makeReducedRowEchelonForm(a, width, pivotColumnIndexes);
