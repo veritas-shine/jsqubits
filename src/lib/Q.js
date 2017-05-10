@@ -3,6 +3,8 @@
  */
 
 import {ALL} from './constants';
+export Complex from './Complex';
+export QState from './QState';
 
 function roundTowardsZero(value) {
   return value >=0 ? Math.floor(value) : Math.ceil(value);

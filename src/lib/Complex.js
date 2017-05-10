@@ -6,15 +6,6 @@ import {validateArgs} from './utils';
 
 export default class Complex {
 
-  static complex = (real, imaginary) => new Complex(real, imaginary);
-
-  static real = (real) => new Complex(real, 0);
-
-  static ZERO = Complex.complex(0, 0);
-  static ONE = Complex.complex(1, 0);
-  static SQRT2 = Complex.real(Math.SQRT2);
-  static SQRT1_2 = Complex.real(Math.SQRT1_2);
-
   constructor(real, imaginary) {
     validateArgs(arguments, 1, 2, 'Must supply a real, and optionally an imaginary, argument to Complex()');
     imaginary = imaginary || 0;
@@ -115,6 +106,19 @@ export default class Complex {
 
   eql(other) {
     if (!(other instanceof Complex)) return false;
-    return this.r === other.real() && this.i === other.imaginary();
+    let result = this.r === other.real() && this.i === other.imaginary();
+    if (!result) {
+      console.log(111, this);
+    }
+    return result;
   }
 }
+
+Complex.complex = (real, imaginary) => new Complex(real, imaginary);
+
+Complex.real = (real) => new Complex(real, 0);
+
+Complex.ZERO = Complex.complex(0, 0);
+Complex.ONE = Complex.complex(1, 0);
+Complex.SQRT2 = Complex.real(Math.SQRT2);
+Complex.SQRT1_2 = Complex.real(Math.SQRT1_2);
