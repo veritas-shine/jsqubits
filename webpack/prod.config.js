@@ -32,7 +32,7 @@ Object.assign(prodConfig, {
     loaders: [
       createSourceLoader({
         happy: {id: 'jsx'},
-        test: /\.jsx?$/,
+        test: /\.js?$/,
         exclude: /node_modules/,
         loaders: 'babel',
       }),

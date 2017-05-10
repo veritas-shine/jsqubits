@@ -33,4 +33,4 @@ function createHiddenStringFunction(hiddenString) {
 };
 
 var f = createHiddenStringFunction("01101");
-log("Hidden string is: " + bernsteinVazirani(f, 5));
+console.log("Hidden string is: " + bernsteinVazirani(f, 5));

@@ -22,19 +22,13 @@
     "compression": "^1.6.2",
     "cookie-parser": "^1.4.3",
     "express": "^4.14.0",
-    "extract-text-webpack-plugin": "^0.9.1",
     "file-loader": "^0.8.5",
     "happypack": "^2.1.1",
     "katex": "^0.7.1",
-    "less": "^2.7.1",
-    "less-loader": "^2.2.3",
-    "moment": "^2.12.0",
-    "multer": "^1.1.0",
     "multireducer": "^2.0.0",
-    "piping": "^0.3.2",
-    "postcss-loader": "^0.9.1",
+    "piping": "^1.0.0-rc.4",
     "react": "^15.2.1",
-    "react-addons-update": "^15.5.2",
+    "react-codemirror": "^0.3.0",
     "react-dom": "^15.2.1",
     "react-helmet": "^3.1.0",
     "react-katex": "^1.1.0",
@@ -48,11 +42,15 @@
     "serialize-javascript": "^1.2.0",
     "serve-favicon": "^2.3.0",
     "superagent": "^1.8.3",
-    "url-loader": "^0.5.7",
     "urldecode": "^1.0.1",
     "webpack-isomorphic-tools": "^2.2.50"
   },
   "devDependencies": {
+    "extract-text-webpack-plugin": "^0.9.1",
+    "less": "^2.7.1",
+    "less-loader": "^2.2.3",
+    "postcss-loader": "^0.9.1",
+    "url-loader": "^0.5.7",
     "autoprefixer": "^6.3.3",
     "babel-plugin-typecheck": "^3.9.0",
     "bootstrap-sass": "^3.3.6",
@@ -72,9 +70,6 @@
     "react-transform-catch-errors": "^1.0.2",
     "react-transform-hmr": "^1.0.4",
     "redbox-react": "^1.2.3",
-    "redux-devtools": "^3.3.1",
-    "redux-devtools-dock-monitor": "^1.1.1",
-    "redux-devtools-log-monitor": "1.0.9",
     "sass-loader": "^3.2.0",
     "strip-loader": "^0.1.2",
     "style-loader": "^0.13.1",
@@ -133,10 +128,11 @@
       }
     },
     "dev-prepare": {
-      "command": "MAKE_DLL=1 webpack --display-error-details --config webpack/dev.config.js",
+      "command": "webpack --display-error-details --config webpack/dev.config.js",
       "env": {
         "NODE_PATH": "./src",
-        "NODE_ENV": "development"
+        "NODE_ENV": "development",
+        "MAKE_DLL": 1
       }
     },
     "watch-client": {

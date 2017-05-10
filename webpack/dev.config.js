@@ -73,7 +73,7 @@ Object.assign(devConfig, {
     loaders: [
       createSourceLoader({
         happy: {id: 'jsx'},
-        test: /\.jsx?$/,
+        test: /\.js?$/,
         loaders: [
           'babel?' + JSON.stringify(babelLoaderQuery),
           'eslint-loader'],
