@@ -1,17 +1,16 @@
-var jsqubits = require('../index').jsqubits;
-var jsqubitsmath = require('../index').jsqubitsmath;
+import Q, {QState} from '../lib/Q';
 var jsqubitsJasmineMatchers = require('./matchers');
 
 describe('Simple Quantum Algorithms', function() {
-    var ALL = jsqubits.ALL;
+    var ALL = Q.ALL;
     beforeEach(function() {
-        this.addMatchers(jsqubitsJasmineMatchers);
+        jasmine.addMatchers(jsqubitsJasmineMatchers);
     });
 
     describe("Super dense coding", function() {
 
         var superDense = function(input) {
-            var state = jsqubits('|00>').hadamard(0).cnot(0,1);
+            var state = new Q('|00>').hadamard(0).cnot(0,1);
 
 //            Alice prepares her qbit
             var alice = 1;
@@ -50,7 +49,7 @@ describe('Simple Quantum Algorithms', function() {
 
         var simpleSearch = function(f) {
             var inputBits = {from: 1, to: 2};
-            return jsqubits('|001>')
+            return new Q('|001>')
                     .hadamard(ALL)
                     .applyFunction(inputBits, 0, f)
                     .hadamard(inputBits)
@@ -93,8 +92,8 @@ describe('Simple Quantum Algorithms', function() {
         };
 
         it ("should support transmition of quantum state from Alice to Bob", function(){
-            var stateToBeTransmitted = jsqubits("|0>").rotateX(0, Math.PI/3).rotateZ(0, Math.PI/5);
-            var initialState = jsqubits("|000>").hadamard(1).cnot(1,0).rotateX(2, Math.PI/3).rotateZ(2, Math.PI/5);
+            var stateToBeTransmitted = new Q("|0>").rotateX(0, Math.PI/3).rotateZ(0, Math.PI/5);
+            var initialState = new Q("|000>").hadamard(1).cnot(1,0).rotateX(2, Math.PI/3).rotateZ(2, Math.PI/5);
             var stateToBeTransmitted0 = stateToBeTransmitted.amplitude('|0>');
             var stateToBeTransmitted1 = stateToBeTransmitted.amplitude('|1>');
             var finalState = applyTeleportation(initialState);
@@ -118,7 +117,7 @@ describe('Simple Quantum Algorithms', function() {
     describe("Deutsch's algorithm", function() {
 
         var deutsch = function(f) {
-           return jsqubits('|01>').hadamard(jsqubits.ALL).applyFunction(1, 0, f).hadamard(jsqubits.ALL).measure(1).result;
+           return new Q('|01>').hadamard(Q.ALL).applyFunction(1, 0, f).hadamard(Q.ALL).measure(1).result;
         };
 
         it("should compute 0 for fixed function returning 1", function() {
@@ -142,7 +141,7 @@ describe('Simple Quantum Algorithms', function() {
     describe("Deutsch-Jozsa algorithm", function() {
         var deutschJozsa = function(f) {
             var inputBits = {from: 1, to: 3};
-            var result = jsqubits('|0001>')
+            var result = new Q('|0001>')
                     .hadamard(ALL)
                     .applyFunction(inputBits, 0, f)
                     .hadamard(inputBits)
@@ -176,7 +175,7 @@ describe('Simple Quantum Algorithms', function() {
         var singleRunOfSimonsCircuit = function(f, numbits) {
             var inputBits = {from: numbits, to: 2 * numbits - 1};
             var targetBits = {from: 0, to: numbits - 1};
-            var qbits = new jsqubits.QState(2 * numbits)
+            var qbits = new QState(2 * numbits)
                     .hadamard(inputBits)
                     .applyFunction(inputBits, targetBits, f)
                     .hadamard(inputBits);
@@ -194,7 +193,7 @@ describe('Simple Quantum Algorithms', function() {
                     results.push(result);
                     estimatedNumberOfIndependentSolutions++;
                     if (estimatedNumberOfIndependentSolutions == numBits - 1) {
-                        nullSpace = jsqubitsmath.findNullSpaceMod2(results, numBits);
+                        nullSpace = Q.findNullSpaceMod2(results, numBits);
                         if (nullSpace.length == 1) break;
                         estimatedNumberOfIndependentSolutions = numBits - nullSpace.length;
                     }
