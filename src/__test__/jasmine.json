@@ -1,6 +1,6 @@
 {
   "spec_dir": "src/__test__",
   "spec_files": [
-    "**/simple_algorithms.spec.js"
+    "**/qstate.spec.js"
   ]
 }

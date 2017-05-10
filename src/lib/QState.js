@@ -15,31 +15,89 @@ import Complex from './Complex';
 import AmplitudeState from './AmplitudeState';
 import Measurement from './Measurement';
 
+function _applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
+  console.log(19, controlBits, targetBit, qbitFunction, qState);
+  const newAmplitudes = {};
+  const statesThatCanBeSkipped = {};
+  const targetBitMask = 1 << targetBit;
+  const controlBitMask = createBitMask(controlBits);
+  qState.each(function (stateWithAmplitude) {
+    const state = stateWithAmplitude.asNumber();
+    if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
+    statesThatCanBeSkipped[state ^ targetBitMask] = true;
+    const indexOf1 = state | targetBitMask;
+    const indexOf0 = indexOf1 - targetBitMask;
+    if (controlBits === null || ((state & controlBitMask) === controlBitMask)) {
+      const result = qbitFunction(qState.amplitude(indexOf0), qState.amplitude(indexOf1));
+      sparseAssign(newAmplitudes, indexOf0, result.amplitudeOf0);
+      sparseAssign(newAmplitudes, indexOf1, result.amplitudeOf1);
+    } else {
+      sparseAssign(newAmplitudes, indexOf0, qState.amplitude(indexOf0));
+      sparseAssign(newAmplitudes, indexOf1, qState.amplitude(indexOf1));
+    }
+  });
+
+  return new QState(qState.numBits(), newAmplitudes);
+}
+
+
+function validateTargetBitRangesDontOverlap(controlBits, targetBits) {
+  if ((controlBits.to >= targetBits.from) && (targetBits.to >= controlBits.from)) {
+    throw "control and target bits must not be the same nor overlap";
+  }
+}
+
+// for `toString`
+//
+function formatAmplitude(amplitude, formatFlags) {
+  const amplitudeString = amplitude.format(formatFlags);
+  return amplitudeString === '1' ? '' : amplitudeString + " ";
+}
+
+function compareStatesWithAmplitudes(a, b) {
+  return a.asNumber() - b.asNumber();
+}
+
+function sortedNonZeroStates(qState) {
+  const nonZeroStates = [];
+  qState.each(function (stateWithAmplitude) {
+    nonZeroStates.push(stateWithAmplitude);
+  });
+  nonZeroStates.sort(compareStatesWithAmplitudes);
+  return nonZeroStates;
+}
+
+//        Note this could actually be implemented as controlledR(controlBits, targetBits, PI/4)
+const expPiOn4 = new Complex(Math.SQRT1_2, Math.SQRT1_2);
+
 export default class QState {
+
   constructor(numBits, amplitudes) {
     validateArgs(arguments, 1, 'new QState() must be supplied with number of bits (optionally with amplitudes as well)');
     amplitudes = amplitudes || [Complex.ONE];
+    this._nb = numBits;
+    this._amplitudes = amplitudes;
+  }
 
-    this.numBits = function () {
-      return numBits;
-    };
+  numBits() {
+    return this._nb;
+  }
 
-    this.amplitude = function (basisState) {
-      validateArgs(arguments, 1, 1, 'Must supply an index to amplitude()');
-      const numericIndex = (typeof basisState === 'string') ? parseBitString(basisState).value : basisState;
-      return amplitudes[numericIndex] || Complex.ZERO;
-    };
+  amplitude(basisState) {
+    validateArgs(arguments, 1, 1, 'Must supply an index to amplitude()');
+    const numericIndex = (typeof basisState === 'string') ? parseBitString(basisState).value : basisState;
+    return this._amplitudes[numericIndex] || Complex.ZERO;
+  }
 
-    this.each = function (callBack) {
-      validateArgs(arguments, 1, 1, "Must supply a callback function to each()");
-      for (const index in amplitudes) {
-        if (amplitudes.hasOwnProperty(index)) {
-          const returnValue = callBack(new AmplitudeState(numBits, index, amplitudes[index]));
-          // NOTE: Want to continue on void and null returns!
-          if (returnValue === false) break;
-        }
+  each(callBack) {
+    validateArgs(arguments, 1, 1, "Must supply a callback function to each()");
+    for (const index in this._amplitudes) {
+      if (this._amplitudes.hasOwnProperty(index)) {
+        const returnValue = callBack(new AmplitudeState(this._nb, index, this._amplitudes[index]));
+        // NOTE: Want to continue on void and null returns!
+        if (returnValue === false) break;
       }
-    };
+    }
   }
 
   multiply(amount) {
@@ -69,7 +127,7 @@ export default class QState {
     return this.add(otherState.multiply(-1));
   }
 
-  tensorProduct = function (otherState) {
+  tensorProduct(otherState) {
     const amplitudes = {};
     this.each(function (basisWithAmplitudeA) {
       otherState.each(function (otherBasisWithAmplitude) {
@@ -79,9 +137,7 @@ export default class QState {
       });
     });
     return new QState(this.numBits() + otherState.numBits(), amplitudes);
-  };
-
-  kron = this.tensorProduct;
+  }
 
   controlledHadamard(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledHadamard()');
@@ -164,16 +220,12 @@ export default class QState {
     return this.controlledR(null, targetBits, angle);
   }
 
-  R = this.r;
-
   controlledX(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to cnot() / controlledX().');
     return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
       return {amplitudeOf0: amplitudeOf1, amplitudeOf1: amplitudeOf0};
     });
   }
-
-  cnot = this.controlledX;
 
   x(targetBits) {
     validateArgs(arguments, 1, 1, 'Must supply target bits to x() / not().');
@@ -195,8 +247,6 @@ export default class QState {
     return this.controlledY(null, targetBits);
   }
 
-  Y = this.y;
-
   controlledZ(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledZ().');
     return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
@@ -208,8 +258,6 @@ export default class QState {
     validateArgs(arguments, 1, 1, 'Must supply target bits to z().');
     return this.controlledZ(null, targetBits);
   }
-
-  Z = this.z;
 
   controlledS(controlBits, targetBits) {
 //        Note this could actually be implemented as controlledR(controlBits, targetBits, PI/2)
@@ -224,25 +272,17 @@ export default class QState {
     return this.controlledS(null, targetBits);
   }
 
-  S = this.s;
-
-  controlledT = (function () {
-//        Note this could actually be implemented as controlledR(controlBits, targetBits, PI/4)
-    const expPiOn4 = new Complex(Math.SQRT1_2, Math.SQRT1_2);
-    return function (controlBits, targetBits) {
-      validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledT().');
-      return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
-        return {amplitudeOf0: amplitudeOf0, amplitudeOf1: amplitudeOf1.multiply(expPiOn4)};
-      });
-    };
-  })();
+  controlledT(controlBits, targetBits) {
+    validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledT().');
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+      return {amplitudeOf0: amplitudeOf0, amplitudeOf1: amplitudeOf1.multiply(expPiOn4)};
+    });
+  }
 
   t(targetBits) {
     validateArgs(arguments, 1, 1, 'Must supply target bits to t().');
     return this.controlledT(null, targetBits);
   }
-
-  T = this.t;
 
   controlledSwap(controlBits, targetBit1, targetBit2) {
     validateArgs(arguments, 3, 3, "Must supply controlBits, targetBit1, and targetBit2 to controlledSwap()");
@@ -286,30 +326,6 @@ export default class QState {
     return this.controlledX(controlBits, targetBit);
   }
 
-  _applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
-    const newAmplitudes = {};
-    const statesThatCanBeSkipped = {};
-    const targetBitMask = 1 << targetBit;
-    const controlBitMask = createBitMask(controlBits);
-    qState.each(function (stateWithAmplitude) {
-      const state = stateWithAmplitude.asNumber();
-      if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
-      statesThatCanBeSkipped[state ^ targetBitMask] = true;
-      const indexOf1 = state | targetBitMask;
-      const indexOf0 = indexOf1 - targetBitMask;
-      if (controlBits === null || ((state & controlBitMask) === controlBitMask)) {
-        const result = qbitFunction(qState.amplitude(indexOf0), qState.amplitude(indexOf1));
-        sparseAssign(newAmplitudes, indexOf0, result.amplitudeOf0);
-        sparseAssign(newAmplitudes, indexOf1, result.amplitudeOf1);
-      } else {
-        sparseAssign(newAmplitudes, indexOf0, qState.amplitude(indexOf0));
-        sparseAssign(newAmplitudes, indexOf1, qState.amplitude(indexOf1));
-      }
-    });
-
-    return new QState(qState.numBits(), newAmplitudes);
-  }
-
   controlledApplicatinOfqBitOperator(controlBits, targetBits, qbitFunction) {
     validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and qbitFunction to controlledApplicatinOfqBitOperator().');
     const targetBitArray = convertBitQualifierToBitArray(targetBits, this.numBits());
@@ -321,50 +337,39 @@ export default class QState {
     let result = this;
     for (let i = 0; i < targetBitArray.length; i++) {
       const targetBit = targetBitArray[i];
-      result = this._applyToOneBit(controlBitArray, targetBit, qbitFunction, result);
+      result = _applyToOneBit(controlBitArray, targetBit, qbitFunction, result);
     }
     return result;
   }
 
-  applyFunction = (function () {
+  applyFunction(inputBits, targetBits, functionToApply) {
+    validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and functionToApply to applyFunction().');
+    const qState = this;
+    const inputBitRange = convertBitQualifierToBitRange(inputBits, this.numBits());
+    const targetBitRange = convertBitQualifierToBitRange(targetBits, this.numBits());
+    validateTargetBitRangesDontOverlap(inputBitRange, targetBitRange);
+    const newAmplitudes = {};
+    const statesThatCanBeSkipped = {};
+    const highBitMask = (1 << (inputBitRange.to + 1)) - 1;
+    const targetBitMask = ((1 << (1 + targetBitRange.to - targetBitRange.from)) - 1) << targetBitRange.from;
 
-    function validateTargetBitRangesDontOverlap(controlBits, targetBits) {
-      if ((controlBits.to >= targetBits.from) && (targetBits.to >= controlBits.from)) {
-        throw "control and target bits must not be the same nor overlap";
+    this.each(function (stateWithAmplitude) {
+      const state = stateWithAmplitude.asNumber();
+      if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
+      const input = (state & highBitMask) >> inputBitRange.from;
+      const result = (functionToApply(input) << targetBitRange.from) & targetBitMask;
+      const resultingState = state ^ result;
+      if (resultingState === state) {
+        sparseAssign(newAmplitudes, state, stateWithAmplitude.amplitude);
+      } else {
+        statesThatCanBeSkipped[resultingState] = true;
+        sparseAssign(newAmplitudes, state, qState.amplitude(resultingState));
+        sparseAssign(newAmplitudes, resultingState, stateWithAmplitude.amplitude);
       }
-    }
+    });
 
-    return function (inputBits, targetBits, functionToApply) {
-      validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and functionToApply to applyFunction().');
-      const qState = this;
-      const inputBitRange = convertBitQualifierToBitRange(inputBits, this.numBits());
-      const targetBitRange = convertBitQualifierToBitRange(targetBits, this.numBits());
-      validateTargetBitRangesDontOverlap(inputBitRange, targetBitRange);
-      const newAmplitudes = {};
-      const statesThatCanBeSkipped = {};
-      const highBitMask = (1 << (inputBitRange.to + 1)) - 1;
-      const targetBitMask = ((1 << (1 + targetBitRange.to - targetBitRange.from)) - 1) << targetBitRange.from;
-
-      this.each(function (stateWithAmplitude) {
-        const state = stateWithAmplitude.asNumber();
-        if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
-        const input = (state & highBitMask) >> inputBitRange.from;
-        const result = (functionToApply(input) << targetBitRange.from) & targetBitMask;
-        const resultingState = state ^ result;
-        if (resultingState === state) {
-          sparseAssign(newAmplitudes, state, stateWithAmplitude.amplitude);
-        } else {
-          statesThatCanBeSkipped[resultingState] = true;
-          sparseAssign(newAmplitudes, state, qState.amplitude(resultingState));
-          sparseAssign(newAmplitudes, resultingState, stateWithAmplitude.amplitude);
-        }
-      });
-
-      return new QState(this.numBits(), newAmplitudes);
-    };
-  })();
-
-  random = Math.random;
+    return new QState(this.numBits(), newAmplitudes);
+  }
 
   normalize() {
     const amplitudes = {};
@@ -462,39 +467,18 @@ export default class QState {
       lhsAmplitudesHaveMatchingRhsAmplitudes(other, this);
   }
 
-  toString = (function () {
-
-    function formatAmplitude(amplitude, formatFlags) {
-      const amplitudeString = amplitude.format(formatFlags);
-      return amplitudeString === '1' ? '' : amplitudeString + " ";
+  toString() {
+    let result = '';
+    const formatFlags = {decimalPlaces: 4};
+    const nonZeroStates = sortedNonZeroStates(this);
+    let stateWithAmplitude = null;
+    for (let i = 0; i < nonZeroStates.length; i++) {
+      if (result !== '') formatFlags.spacedSign = true;
+      stateWithAmplitude = nonZeroStates[i];
+      result = result + formatAmplitude(stateWithAmplitude.amplitude, formatFlags) + "|" + stateWithAmplitude.asBitString() + ">";
     }
-
-    function compareStatesWithAmplitudes(a, b) {
-      return a.asNumber() - b.asNumber();
-    }
-
-    function sortedNonZeroStates(qState) {
-      const nonZeroStates = [];
-      qState.each(function (stateWithAmplitude) {
-        nonZeroStates.push(stateWithAmplitude);
-      });
-      nonZeroStates.sort(compareStatesWithAmplitudes);
-      return nonZeroStates;
-    }
-
-    return function () {
-      let result = '';
-      const formatFlags = {decimalPlaces: 4};
-      const nonZeroStates = sortedNonZeroStates(this);
-      let stateWithAmplitude = null;
-      for (let i = 0; i < nonZeroStates.length; i++) {
-        if (result !== '') formatFlags.spacedSign = true;
-        stateWithAmplitude = nonZeroStates[i];
-        result = result + formatAmplitude(stateWithAmplitude.amplitude, formatFlags) + "|" + stateWithAmplitude.asBitString() + ">";
-      }
-      return result;
-    };
-  })()
+    return result;
+  }
 }
 
 QState.fromBits = function (bitString) {
@@ -507,5 +491,14 @@ QState.fromBits = function (bitString) {
 
 // alias
 //
+QState.prototype.cnot = QState.prototype.controlledX;
 QState.prototype.not = QState.prototype.x;
 QState.prototype.X = QState.prototype.x;
+QState.prototype.Y = QState.prototype.y;
+QState.prototype.Z = QState.prototype.z;
+
+QState.prototype.R = QState.prototype.r;
+QState.prototype.S = QState.prototype.s;
+QState.prototype.T = QState.prototype.t;
+QState.prototype.kron = QState.prototype.tensorProduct;
+QState.prototype.random = Math.random;

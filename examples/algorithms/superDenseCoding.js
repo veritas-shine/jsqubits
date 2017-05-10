@@ -34,7 +34,7 @@
     };
 
 //    var input = prompt("Two bit string to send", "10");
-    var input = "10";
+    var input = "01";
     var result = superDense(input);
     console.log("Decoded string is: " + result);
 

@@ -85,30 +85,30 @@ describe('QState', function () {
     });
     it("invokes the qbitFunction when the control bit is one", function () {
       var qbitFunction = jasmine.createSpy('qbitFunction');
-      console.log(88, qbitFunction, qbitFunction.add);
-      qbitFunction.add.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
+      qbitFunction.and.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
       var x = new Q('|100>').controlledApplicatinOfqBitOperator(2, 0, qbitFunction);
-      expect(qbitFunction.argsForCall[0]).toEql([Complex.ONE, Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args).toEql([Complex.ONE, Complex.ZERO]);
       expect(x.amplitude('|100>')).toBeApprox(real(0.2));
       expect(x.amplitude('|101>')).toBeApprox(real(0.3));
     });
     it("flips the target bit when the control bit specifier is null", function () {
       var qbitFunction = jasmine.createSpy('qbitFunction')
-        .add.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
+        .and.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
       var x = new Q('|000>').controlledApplicatinOfqBitOperator(null, 0, qbitFunction);
-      expect(qbitFunction.argsForCall[0]).toEql([Complex.ONE, Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args).toEql([Complex.ONE, Complex.ZERO]);
       expect(x.amplitude('|000>')).toBeApprox(real(0.2));
       expect(x.amplitude('|001>')).toBeApprox(real(0.3));
     });
     it("flips the target bits when the control bit is one (target bit range)", function () {
       var targetBits = {from: 0, to: 1};
       var qbitFunction = jasmine.createSpy('qbitFunction')
-        .add.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
+        .and.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
       var x = new Q('|101>').controlledApplicatinOfqBitOperator(2, targetBits, qbitFunction);
       expect(qbitFunction).toHaveBeenCalled();
-      expect(qbitFunction.argsForCall[0]).toEql([Complex.ZERO, Complex.ONE]);
-      expect(qbitFunction.argsForCall[1]).toEql([real(0.2), Complex.ZERO]);
-      expect(qbitFunction.argsForCall[2]).toEql([real(0.3), Complex.ZERO]);
+      console.log(108, qbitFunction.calls.mostRecent().args);
+      expect(qbitFunction.calls.mostRecent().args[0]).toEql([Complex.ZERO, Complex.ONE]);
+      expect(qbitFunction.calls.mostRecent().args[1]).toEql([real(0.2), Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args[2]).toEql([real(0.3), Complex.ZERO]);
       expect(x.amplitude('|100>')).toBeApprox(real(0.2));
       expect(x.amplitude('|101>')).toBeApprox(real(0.2));
       expect(x.amplitude('|110>')).toBeApprox(real(0.3));
@@ -116,12 +116,12 @@ describe('QState', function () {
     });
     it("flips the target bits when the control bit is one (target bit array)", function () {
       var qbitFunction = jasmine.createSpy('qbitFunction')
-        .add.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
+        .and.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
       var x = new Q('|1001>').controlledApplicatinOfqBitOperator(3, [0, 2], qbitFunction);
       expect(qbitFunction).toHaveBeenCalled();
-      expect(qbitFunction.argsForCall[0]).toEql([Complex.ZERO, Complex.ONE]);
-      expect(qbitFunction.argsForCall[1]).toEql([real(0.2), Complex.ZERO]);
-      expect(qbitFunction.argsForCall[2]).toEql([real(0.3), Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args[0]).toEql([Complex.ZERO, Complex.ONE]);
+      expect(qbitFunction.calls.mostRecent().args[1]).toEql([real(0.2), Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args[2]).toEql([real(0.3), Complex.ZERO]);
       expect(x.amplitude('|1000>')).toBeApprox(real(0.2));
       expect(x.amplitude('|1001>')).toBeApprox(real(0.2));
       expect(x.amplitude('|1100>')).toBeApprox(real(0.3));
@@ -143,19 +143,19 @@ describe('QState', function () {
     });
     it("invokes the qbitFunction when the control bits are all one (control bit range)", function () {
       var qbitFunction = jasmine.createSpy('qbitFunction')
-        .add.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
+        .and.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
       var controlBits = {from: 1, to: 2};
       var x = new Q('|110>').controlledApplicatinOfqBitOperator(controlBits, 0, qbitFunction);
-      expect(qbitFunction.argsForCall[0]).toEql([Complex.ONE, Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args[0]).toEql([Complex.ONE, Complex.ZERO]);
       expect(x.amplitude('|110>')).toBeApprox(real(0.2));
       expect(x.amplitude('|111>')).toBeApprox(real(0.3));
     });
     it("invokes the qbitFunction when the control bits are all one (control bit array)", function () {
       var qbitFunction = jasmine.createSpy('qbitFunction')
-        .add.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
+        .and.returnValue({amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)});
       var controlBits = [1, 3];
       var x = new Q('|1010>').controlledApplicatinOfqBitOperator(controlBits, 0, qbitFunction);
-      expect(qbitFunction.argsForCall[0]).toEql([Complex.ONE, Complex.ZERO]);
+      expect(qbitFunction.calls.mostRecent().args).toEql([Complex.ONE, Complex.ZERO]);
       expect(x.amplitude('|1010>')).toBeApprox(real(0.2));
       expect(x.amplitude('|1011>')).toBeApprox(real(0.3));
     });
@@ -550,7 +550,7 @@ describe('QState', function () {
     });
 
     it("invokes function with states (single bit)", function () {
-      var f = jasmine.createSpy('f').add.returnValue(1);
+      var f = jasmine.createSpy('f').and.returnValue(1);
       var x = new Q('|1000>').hadamard(2);
       x.applyFunction(2, 0, f);
       expect(f).toHaveBeenCalledWith(0);
@@ -558,7 +558,7 @@ describe('QState', function () {
     });
 
     it("does nothing when the funciton returns zero", function () {
-      var f = jasmine.createSpy('f').add.returnValue(0);
+      var f = jasmine.createSpy('f').and.returnValue(0);
       var x = new Q('|00>').applyFunction(1, 0, f);
       expect(f).toHaveBeenCalled();
       expect(x).toEql(new Q('|00>'));
@@ -610,9 +610,9 @@ describe('QState', function () {
       var callBack = jasmine.createSpy('callBack');
       new Q('|10>').hadamard(1).each(callBack);
       expect(callBack).toHaveBeenCalled();
-      expect(callBack.argsForCall.length).toEql(2);
-      var stateWithAmplitude0 = callBack.argsForCall[0][0];
-      var stateWithAmplitude2 = callBack.argsForCall[1][0];
+      expect(callBack.calls.mostRecent().args.length).toEqual(2);
+      var stateWithAmplitude0 = callBack.calls.mostRecent().args[0];
+      var stateWithAmplitude2 = callBack.calls.mostRecent().args[1];
       var index0 = stateWithAmplitude0.index;
       expect(index0 === '0' || index0 === '2').toBeTruthy();
       if (index0 === '2') {
