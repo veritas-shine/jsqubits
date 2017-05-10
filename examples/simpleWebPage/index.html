@@ -1,22 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>jsqubits example</title>
-    <script src="../../lib/jsqubits.js"></script>
-    <script src="../../lib/jsqubitsmath.js"></script>
+  <title>jsqubits example</title>
+  <script src="../../lib/jsqubits.js"></script>
+  <script src="../../lib/jsqubitsmath.js"></script>
 </head>
 <body>
-    <h1>jsqubits sample</h1>
-    <p>
-        Applying the Hadamard operator followed by the T operator to |0> gives <span id='jsqubitsResult'></span>
-    </p>
-    <p>
-        234<sup>756</sup> mod 15 = <span id='powerModResult'></span>
-    </p>
-    <script>
-        var qstate = jsqubits('|0>').hadamard(0).T(0);
-        document.getElementById("jsqubitsResult").innerHTML = qstate.toString();
-        document.getElementById("powerModResult").innerHTML = jsqubitsmath.powerMod(234, 756, 15).toString();
-    </script>
+<h1>jsqubits sample</h1>
+<p>
+  Applying the Hadamard operator followed by the T operator to |0> gives <span id='jsqubitsResult'></span>
+</p>
+<p>
+  234<sup>756</sup> mod 15 = <span id='powerModResult'></span>
+</p>
+<script>
+  var real = jsqubits.real;
+  var qstate = jsqubits('|0>').hadamard(0).T(0);
+  document.getElementById("jsqubitsResult").innerHTML = qstate.toString();
+  document.getElementById("powerModResult").innerHTML = jsqubitsmath.powerMod(234, 756, 15).toString();
+
+  var targetBits = {from: 0, to: 1};
+  function dummy(arg1, arg2, arg3, arg4) {
+      console.log(24, arg1.toString(), arg2.toString(), arg3, arg4);
+    return {amplitudeOf0: real(0.2), amplitudeOf1: real(0.3)};
+  }
+
+  console.log(27, '------start----------');
+  var x = jsqubits('|101>').controlledApplicatinOfqBitOperator(2, targetBits, dummy);
+  console.log(x.toString());
+</script>
 </body>
 </html>

@@ -14,9 +14,13 @@ import {
 import Complex from './Complex';
 import AmplitudeState from './AmplitudeState';
 import Measurement from './Measurement';
+import Q from './Q';
 
 function _applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
-  console.log(19, controlBits, targetBit, qbitFunction, qState);
+  if (Q.DEBUG) {
+    console.log(19, controlBits, targetBit, qState.toString());
+  }
+
   const newAmplitudes = {};
   const statesThatCanBeSkipped = {};
   const targetBitMask = 1 << targetBit;
@@ -329,6 +333,9 @@ export default class QState {
   controlledApplicatinOfqBitOperator(controlBits, targetBits, qbitFunction) {
     validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and qbitFunction to controlledApplicatinOfqBitOperator().');
     const targetBitArray = convertBitQualifierToBitArray(targetBits, this.numBits());
+    if (Q.DEBUG) {
+      console.log(335, targetBitArray);
+    }
     let controlBitArray = null;
     if (controlBits !== null) {
       controlBitArray = convertBitQualifierToBitArray(controlBits, this.numBits());

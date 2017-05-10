@@ -68,7 +68,6 @@
     "better-npm-run": "0.0.14",
     "bootstrap-sass": "^3.3.6",
     "bootstrap-sass-loader": "^1.0.10",
-    "chai": "^3.5.0",
     "clean-webpack-plugin": "^0.1.8",
     "concurrently": "^2.0.0",
     "css-loader": "~0.23.1",
@@ -84,7 +83,6 @@
     "json-loader": "^0.5.4",
     "less": "^2.7.1",
     "less-loader": "^2.2.3",
-    "mocha": "^3.3.0",
     "node-sass": "^3.4.2",
     "postcss-loader": "^0.9.1",
     "react-addons-perf": "^15.2.1",
@@ -112,16 +110,9 @@
     "dev:prepare": "concurrently --kill-others \"better-npm-run dev-prepare\"",
     "watch-client": "better-npm-run watch-client",
     "dev": "concurrently --kill-others \"npm run watch-client\" \"npm run start-dev\"",
-    "test-node": "./node_modules/mocha/bin/mocha $(find src -name 'complex.spec.js') --compilers js:babel-core/register",
-    "test2": "better-npm-run test2"
+    "test2": "babel-node src/__test__/run.js"
   },
   "betterScripts": {
-    "test2": {
-      "command": "babel-node src/__test__/run.js",
-      "env": {
-        "NODE_PATH": "./src/__test__"
-      }
-    },
     "start-prod": {
       "command": "node ./bin/server.js",
       "env": {

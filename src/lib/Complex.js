@@ -106,11 +106,7 @@ export default class Complex {
 
   eql(other) {
     if (!(other instanceof Complex)) return false;
-    let result = this.r === other.real() && this.i === other.imaginary();
-    if (!result) {
-      console.log(111, this, other);
-    }
-    return result;
+    return this.r === other.real() && this.i === other.imaginary();
   }
 }
 
