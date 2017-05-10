@@ -6,7 +6,7 @@ describe('QState.qft (Quantum Fourier Transform)', function() {
     var real = jsqubits.real;
 
     beforeEach(function() {
-        this.addMatchers(jsqubits.JasmineMatchers);
+        jasmine.addMatchers(jsqubits.JasmineMatchers);
     });
 
     it('Should be a Hadamard when applied to one bit', function() {

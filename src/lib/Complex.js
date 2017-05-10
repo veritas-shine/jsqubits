@@ -108,7 +108,7 @@ export default class Complex {
     if (!(other instanceof Complex)) return false;
     let result = this.r === other.real() && this.i === other.imaginary();
     if (!result) {
-      console.log(111, this);
+      console.log(111, this, other);
     }
     return result;
   }

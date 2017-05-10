@@ -4,6 +4,7 @@
 import {
   validateArgs,
   parseBitString,
+  sparseAssign,
   convertBitQualifierToBitArray,
   createBitMask,
   validateControlAndTargetBitsDontOverlap,
@@ -13,7 +14,6 @@ import {
 import Complex from './Complex';
 import AmplitudeState from './AmplitudeState';
 import Measurement from './Measurement';
-import Q from './Q';
 
 export default class QState {
   constructor(numBits, amplitudes) {
@@ -41,14 +41,6 @@ export default class QState {
       }
     };
   }
-
-  static fromBits = (bitString) => {
-    validateArgs(arguments, 1, 1, 'Must supply a bit string');
-    const parsedBitString = parseBitString(bitString);
-    const amplitudes = {};
-    amplitudes[parsedBitString.value] = Complex.ONE;
-    return new QState(parsedBitString.length, amplitudes);
-  };
 
   multiply(amount) {
     if (typeof amount === 'number') {
@@ -188,9 +180,6 @@ export default class QState {
     return this.controlledX(null, targetBits);
   }
 
-  not = this.x;
-  X = this.x;
-
   controlledY(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledY().');
     return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
@@ -297,48 +286,45 @@ export default class QState {
     return this.controlledX(controlBits, targetBit);
   }
 
-  controlledApplicatinOfqBitOperator = (function () {
+  _applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
+    const newAmplitudes = {};
+    const statesThatCanBeSkipped = {};
+    const targetBitMask = 1 << targetBit;
+    const controlBitMask = createBitMask(controlBits);
+    qState.each(function (stateWithAmplitude) {
+      const state = stateWithAmplitude.asNumber();
+      if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
+      statesThatCanBeSkipped[state ^ targetBitMask] = true;
+      const indexOf1 = state | targetBitMask;
+      const indexOf0 = indexOf1 - targetBitMask;
+      if (controlBits === null || ((state & controlBitMask) === controlBitMask)) {
+        const result = qbitFunction(qState.amplitude(indexOf0), qState.amplitude(indexOf1));
+        sparseAssign(newAmplitudes, indexOf0, result.amplitudeOf0);
+        sparseAssign(newAmplitudes, indexOf1, result.amplitudeOf1);
+      } else {
+        sparseAssign(newAmplitudes, indexOf0, qState.amplitude(indexOf0));
+        sparseAssign(newAmplitudes, indexOf1, qState.amplitude(indexOf1));
+      }
+    });
 
-    function applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
-      const newAmplitudes = {};
-      const statesThatCanBeSkipped = {};
-      const targetBitMask = 1 << targetBit;
-      const controlBitMask = createBitMask(controlBits);
-      qState.each(function (stateWithAmplitude) {
-        const state = stateWithAmplitude.asNumber();
-        if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
-        statesThatCanBeSkipped[state ^ targetBitMask] = true;
-        const indexOf1 = state | targetBitMask;
-        const indexOf0 = indexOf1 - targetBitMask;
-        if (controlBits == null || ((state & controlBitMask) === controlBitMask)) {
-          const result = qbitFunction(qState.amplitude(indexOf0), qState.amplitude(indexOf1));
-          sparseAssign(newAmplitudes, indexOf0, result.amplitudeOf0);
-          sparseAssign(newAmplitudes, indexOf1, result.amplitudeOf1);
-        } else {
-          sparseAssign(newAmplitudes, indexOf0, qState.amplitude(indexOf0));
-          sparseAssign(newAmplitudes, indexOf1, qState.amplitude(indexOf1));
-        }
-      });
+    return new QState(qState.numBits(), newAmplitudes);
+  }
 
-      return new QState(qState.numBits(), newAmplitudes);
+  controlledApplicatinOfqBitOperator(controlBits, targetBits, qbitFunction) {
+    validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and qbitFunction to controlledApplicatinOfqBitOperator().');
+    const targetBitArray = convertBitQualifierToBitArray(targetBits, this.numBits());
+    let controlBitArray = null;
+    if (controlBits !== null) {
+      controlBitArray = convertBitQualifierToBitArray(controlBits, this.numBits());
+      validateControlAndTargetBitsDontOverlap(controlBitArray, targetBitArray);
     }
-
-    return function (controlBits, targetBits, qbitFunction) {
-      validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and qbitFunction to controlledApplicatinOfqBitOperator().');
-      const targetBitArray = convertBitQualifierToBitArray(targetBits, this.numBits());
-      let controlBitArray = null;
-      if (controlBits !== null) {
-        controlBitArray = convertBitQualifierToBitArray(controlBits, this.numBits());
-        validateControlAndTargetBitsDontOverlap(controlBitArray, targetBitArray);
-      }
-      let result = this;
-      for (let i = 0; i < targetBitArray.length; i++) {
-        const targetBit = targetBitArray[i];
-        result = applyToOneBit(controlBitArray, targetBit, qbitFunction, result);
-      }
-      return result;
-    };
-  })();
+    let result = this;
+    for (let i = 0; i < targetBitArray.length; i++) {
+      const targetBit = targetBitArray[i];
+      result = this._applyToOneBit(controlBitArray, targetBit, qbitFunction, result);
+    }
+    return result;
+  }
 
   applyFunction = (function () {
 
@@ -510,3 +496,16 @@ export default class QState {
     };
   })()
 }
+
+QState.fromBits = function (bitString) {
+  validateArgs(arguments, 1, 1, 'Must supply a bit string');
+  const parsedBitString = parseBitString(bitString);
+  const amplitudes = {};
+  amplitudes[parsedBitString.value] = Complex.ONE;
+  return new QState(parsedBitString.length, amplitudes);
+};
+
+// alias
+//
+QState.prototype.not = QState.prototype.x;
+QState.prototype.X = QState.prototype.x;

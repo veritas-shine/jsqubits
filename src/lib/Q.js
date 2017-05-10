@@ -3,11 +3,12 @@
  */
 
 import {ALL} from './constants';
+import QState from './QState';
 export Complex from './Complex';
 export QState from './QState';
 
 function roundTowardsZero(value) {
-  return value >=0 ? Math.floor(value) : Math.ceil(value);
+  return value >= 0 ? Math.floor(value) : Math.ceil(value);
 }
 
 function approximatelyInteger(x) {
@@ -17,32 +18,23 @@ function approximatelyInteger(x) {
 export default class Q {
   static ALL = ALL;
 
-  /**
-   * Return x^y mod m
-   */
-  static powerMod = (x, y, m) => {
-    if (y === 0) return 1;
-    if (y === 1) return x;
-    const halfY = Math.floor(y / 2);
-    const powerHalfY = this.powerMod(x, halfY, m);
-    let result = (powerHalfY * powerHalfY) % m;
-    if (y % 2 === 1) result = (x * result) % m;
-    return result;
-  };
+  constructor(str) {
+    return QState.fromBits(str);
+  }
 
   /**
    * Return x such that n = x^y for some prime number x, or otherwise return 0.
    */
   static powerFactor = (n) => {
-    const log2n = Math.log(n)/Math.log(2);
+    const log2n = Math.log(n) / Math.log(2);
     // Try values of root_y(n) starting at log2n and working your way down to 2.
     let y = Math.floor(log2n);
     if (log2n === y) {
       return 2;
     }
     y--;
-    for(; y > 1; y--) {
-      const x = Math.pow(n, 1/y);
+    for (; y > 1; y--) {
+      const x = Math.pow(n, 1 / y);
       if (approximatelyInteger(x)) {
         return Math.round(x);
       }
@@ -53,8 +45,8 @@ export default class Q {
   /**
    * Greatest common divisor
    */
-  static gcd = function(a, b) {
-    while(b !== 0) {
+  static gcd = function (a, b) {
+    while (b !== 0) {
       const c = a % b;
       a = b;
       b = c;
@@ -65,7 +57,7 @@ export default class Q {
   /**
    * Least common multiple
    */
-  static lcm = function(a, b) {
+  static lcm = function (a, b) {
     return a * b / this.gcd(a, b);
   };
 
@@ -77,7 +69,7 @@ export default class Q {
    * an array of the quotients making up the continued fraction whose value is within the specified precision of the targetValue,
    * and where numerator and denominator are the integer values to which the continued fraction evaluates.
    */
-  static continuedFraction = function(targetValue, precision) {
+  static continuedFraction = function (targetValue, precision) {
     let firstValue, remainder;
     if (Math.abs(targetValue) >= 1) {
       firstValue = roundTowardsZero(targetValue);
@@ -95,7 +87,10 @@ export default class Q {
       const quotient = roundTowardsZero(reciprocal);
       remainder = reciprocal - quotient;
       quotients.push(quotient);
-      const current = {numerator: quotient * oneAgo.numerator + twoAgo.numerator, denominator: quotient * oneAgo.denominator + twoAgo.denominator};
+      const current = {
+        numerator: quotient * oneAgo.numerator + twoAgo.numerator,
+        denominator: quotient * oneAgo.denominator + twoAgo.denominator
+      };
       twoAgo = oneAgo;
       oneAgo = current;
     }
@@ -115,7 +110,7 @@ export default class Q {
    * whose bit values are the entries of a matrix rowIndex.
    * @param width the width of the matrix.
    */
-  static findNullSpaceMod2 = (function() {
+  static findNullSpaceMod2 = (function () {
 
     /**
      * Try to make row pivotRowIndex / column colIndex a pivot
@@ -124,7 +119,7 @@ export default class Q {
     function attemptToMakePivot(a, colIndex, pivotRowIndex) {
       const colBitMask = 1 << colIndex;
       if (colBitMask & a[pivotRowIndex]) return;
-      for (let rowIndex = pivotRowIndex + 1; rowIndex < a.length; rowIndex ++) {
+      for (let rowIndex = pivotRowIndex + 1; rowIndex < a.length; rowIndex++) {
         if (colBitMask & a[rowIndex]) {
           const tmp = a[pivotRowIndex];
           a[pivotRowIndex] = a[rowIndex];
@@ -196,12 +191,27 @@ export default class Q {
       return results;
     }
 
-    return function(a, width) {
+    return function (a, width) {
       a = a.slice(0);
       const pivotColumnIndexes = [];
       makeReducedRowEchelonForm(a, width, pivotColumnIndexes);
       return specialSolutions(a, width, pivotColumnIndexes);
     };
   })();
-
 }
+
+/**
+ * Return x^y mod m
+ */
+function powerMod(x, y, m) {
+  if (y === 0) return 1;
+  if (y === 1) return x;
+  const halfY = Math.floor(y / 2);
+  const powerHalfY = powerMod(x, halfY, m);
+  let result = (powerHalfY * powerHalfY) % m;
+  if (y % 2 === 1) result = (x * result) % m;
+  return result;
+}
+
+Q.powerMod = powerMod;
+
