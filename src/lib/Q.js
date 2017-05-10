@@ -214,4 +214,4 @@ function powerMod(x, y, m) {
 }
 
 Q.powerMod = powerMod;
-
+Q.QState = QState;
