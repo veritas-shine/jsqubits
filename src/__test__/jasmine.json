@@ -1,6 +1,6 @@
 {
   "spec_dir": "src/__test__",
   "spec_files": [
-    "**/factoring.spec.js"
+    "**/qft.spec.js"
   ]
 }
