@@ -43,17 +43,17 @@ export default class Complex {
   }
 
   toString() {
-    if (this.i === 0) return "" + this.r;
+    if (this.i === 0) return `${this.r}`;
     let imaginaryString;
     if (this.i === 1) {
       imaginaryString = 'i';
     } else if (this.i === -1) {
       imaginaryString = '-i';
     } else {
-      imaginaryString = this.i + 'i';
+      imaginaryString = `${this.i}i`;
     }
     if (this.r === 0) return imaginaryString;
-    let sign = (this.i < 0) ? "" : "+";
+    const sign = (this.i < 0) ? '' : '+';
     return this.r + sign + imaginaryString;
   }
 

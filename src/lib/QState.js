@@ -485,6 +485,9 @@ QState.fromBits = (bitString) => {
   if (!bitString) {
     throw new Error('Must supply a bit string');
   }
+  if (typeof bitString !== 'string') {
+    bitString = bitString.toString();
+  }
   const parsedBitString = parseBitString(bitString);
   const amplitudes = {};
   amplitudes[parsedBitString.value] = Complex.ONE;

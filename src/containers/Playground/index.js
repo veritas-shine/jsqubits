@@ -27,6 +27,13 @@ class extends Component {
   componentDidMount() {
     window.Q = Q;
     Q.log = console.log;
+    window.promptForFunction = (message, example) => {
+      const input = prompt(message, example);
+      let f;
+      eval(`f = ${input}`);
+      return f;
+    };
+
     const area = document.getElementById('q-code');
     this.codemirror = codeMirror.fromTextArea(area, {
       lineNumbers: true,

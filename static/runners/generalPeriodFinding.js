@@ -27,7 +27,7 @@ function findPeriod(f, callback) {
     // This function contains the actual quantum computation part of the algorithm.
     // It returns either the frequency of the function f or some integer multiple (where "frequency" is the number of times the period of f will fit into 2^numInputBits)
     function determineFrequency(f) {
-        var qstate = new jsqubits.QState(numInBits + numOutBits).hadamard(inputBits);
+        var qstate = new Q(numInBits + numOutBits).hadamard(inputBits);
         qstate = qstate.applyFunction(inputBits, outBits, f);
         // We do not need to measure the outBits, but it does speed up the simulation.
         qstate = qstate.measure(outBits).newState;
@@ -46,14 +46,14 @@ function findPeriod(f, callback) {
 
         // Each "sample" has a high probability of being approximately equal to some integer multiple of (inputRange/r) rounded to the nearest integer.
         // So we use a continued fraction function to find r (or a divisor of r).
-        var continuedFraction = jsqubitsmath.continuedFraction(sample/inputRange, accuracyRequiredForContinuedFraction);
+        var continuedFraction = Q.continuedFraction(sample/inputRange, accuracyRequiredForContinuedFraction);
         // The denominator is a "candidate" for being r or a divisor of r (hence we need to find the least common multiple of several of these).
         var candidateDivisor = continuedFraction.denominator;
-        log("Candidate divisor of r: " + candidateDivisor);
+      console.log("Candidate divisor of r: " + candidateDivisor);
         // Reduce the chances of getting the wrong answer by ignoring obviously wrong results!
         if (candidateDivisor <= outputRange && candidateDivisor > 1) {
             // The period r should be the least common multiple of all of our candidate values (each is of the form k*r for random integer k).
-            var lcm = jsqubitsmath.lcm(candidateDivisor, bestSoFar)
+            var lcm = Q.lcm(candidateDivisor, bestSoFar)
             if (lcm <= outputRange) {
                 log("This is a good candidate.");
                 bestSoFar = lcm;
@@ -61,14 +61,14 @@ function findPeriod(f, callback) {
                 successes++;
             } else if(!bestSoFarIsAPeriod && f(candidateDivisor) === f0) {
                 // It can occasionally happen that our current best estimate of the period is a complete dead end, but we stumble across a much better one.
-                log("This is a much better candidate");
+              console.log("This is a much better candidate");
                 bestSoFar = candidateDivisor;
                 bestSoFarIsAPeriod = true;
                 successes++;
             }
         }
         attempts++;
-        log("Least common multiple: " + bestSoFar + ". Attempts: " + attempts + ". Good candidates: " + successes);
+      console.log("Least common multiple: " + bestSoFar + ". Attempts: " + attempts + ". Good candidates: " + successes);
         // Yield control for a millisecond to give the browser a chance to log to the console.
         setTimeout(continueFindingPeriod, 50);
     }
@@ -80,9 +80,9 @@ var f = promptForFunction("Enter a function where f(x) = f(x+r) for some r less 
 
 findPeriod(f, function(period) {
         if (f(0) === f(period)) {
-            log("The period of your function is " + period);
+            console.log("The period of your function is " + period);
         } else {
-            log("Could not find period.  Best effort was: " + period);
+          console.log("Could not find period.  Best effort was: " + period);
         }
     }
 );

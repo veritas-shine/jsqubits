@@ -11,13 +11,13 @@ var attempts = 0;
 
 function search(f, callBack) {
     if (attempts === 6) {
-        log("Giving up after " + attempts + " attempts");
+        Q.log("Giving up after " + attempts + " attempts");
         callBack("failed");
         return;
     }
     attempts++;
-    
-    var qstate = new jsqubits.QState(numBits).tensorProduct(jsqubits("|1>")).hadamard(jsqubits.ALL);
+
+    var qstate = new Q.QState(numBits).tensorProduct(new Q("|1>")).hadamard(Q.ALL);
     var amplications = 0;
 
     function amplify() {
@@ -27,7 +27,7 @@ function search(f, callBack) {
                 callBack(result);
                 return;
             }
-            log("Failed result: " + result);
+            Q.log("Failed result: " + result);
             search(f, callBack);
             return;
         }
@@ -35,7 +35,7 @@ function search(f, callBack) {
         qstate = qstate.applyFunction(inputBits, 0, f);
         // Reflect about the mean
         qstate = qstate.hadamard(inputBits).applyFunction(inputBits, 0, function(x){return x === 0 ? 1 : 0;}).hadamard(inputBits);
-        log("Amplified " + amplications + " times.");
+        Q.log("Amplified " + amplications + " times.");
         setTimeout(amplify, 50);
     }
 
@@ -47,6 +47,6 @@ var f = promptForFunction("Enter a function: f(x) = 1 for only one x less than "
 
 var startTime = new Date();
 search(f, function(result) {
-    log("The desired value is " + result);
-    log("Time taken in seconds: " + ((new Date().getTime()) - startTime.getTime()) / 1000);
+    Q.log("The desired value is " + result);
+    Q.log("Time taken in seconds: " + ((new Date().getTime()) - startTime.getTime()) / 1000);
 });

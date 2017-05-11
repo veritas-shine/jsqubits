@@ -5,7 +5,7 @@
  */
 
 function superDense(input) {
-    var state = jsqubits('|00>').add(jsqubits('|11>')).normalize();
+    var state = new Q('|00>').add(new Q('|11>')).normalize();
 
     log("Initial Bell State: " + state);
 
@@ -24,9 +24,9 @@ function superDense(input) {
     state = state.cnot(alice, bob).hadamard(alice);
 
     log("State after Bob receives Alice's qubit and 'decodes' it: " + state);
-    return state.measure(ALL).asBitString();
+    return state.measure(Q.ALL).asBitString();
 };
 
 var input = prompt("Two bit string to send", "10");
 var result = superDense(input);
-log("Decoded string is: " + result);
+Q.log("Decoded string is: " + result);
