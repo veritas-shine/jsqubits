@@ -38,6 +38,7 @@
     "react-router-redux": "^4.0.4",
     "redux": "^3.4.0",
     "redux-connect": "^5.1.0",
+    "semantic-ui-react": "^0.68.3",
     "serialize-javascript": "^1.2.0",
     "serve-favicon": "^2.3.0",
     "superagent": "^1.8.3",
