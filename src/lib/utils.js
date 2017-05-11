@@ -5,8 +5,8 @@ import {roundToZero, ALL} from './constants';
 
 export function validateArgs(args, minimum) {
   let maximum = 10000;
-  let message = 'Must supply at least ' + minimum + ' parameters.';
-  if (arguments.length > 4) throw "Internal error: too many arguments to validateArgs";
+  let message = `Must supply at least ${minimum} parameters.`;
+  if (arguments.length > 4) throw new Error('Internal error: too many arguments to validateArgs');
   if (arguments.length === 4) {
     maximum = arguments[2];
     message = arguments[3];
@@ -20,7 +20,7 @@ export function validateArgs(args, minimum) {
 
 export function parseBitString(bitString) {
   // Strip optional 'ket' characters to support |0101>
-  bitString = bitString.replace(/^\|/,'').replace(/>$/,'');
+  bitString = bitString.replace(/^\|/, '').replace(/>$/, '');
   return {value: parseInt(bitString, 2), length: bitString.length};
 }
 
@@ -34,18 +34,18 @@ export function sparseAssign(array, index, value) {
 
 export function convertBitQualifierToBitRange(bits, numBits) {
   if (bits === null) {
-    throw "bit qualification must be supplied";
+    throw new Error('bit qualification must be supplied');
   } else if (bits === ALL) {
     return {from: 0, to: numBits - 1};
   } else if (typeof bits === 'number') {
     return {from: bits, to: bits};
   } else if (bits.from !== null && bits.to !== null) {
     if (bits.from > bits.to) {
-      throw "bit range must have 'from' being less than or equal to 'to'";
+      throw new Error('bit range must have \'from\' being less than or equal to \'to\'');
     }
     return bits;
   } else {
-    throw "bit qualification must be either: a number, Q.ALL, or {from: n, to: m}";
+    throw new Error('bit qualification must be either: a number, Q.ALL, or {from: n, to: m}');
   }
 }
 
@@ -57,7 +57,7 @@ export function validateControlAndTargetBitsDontOverlap(controlBits, targetBits)
     const controlBit = controlBits[i];
     for (let j = 0; j < targetBits.length; j++) {
       if (controlBit === targetBits[j]) {
-        throw new Error("control and target bits must not be the same nor overlap");
+        throw new Error('control and target bits must not be the same nor overlap');
       }
     }
   }
@@ -67,20 +67,21 @@ export function chooseRandomBasisState(qState) {
   const randomNumber = qState.random();
   let randomStateString = '';
   let accumulativeSquareAmplitudeMagnitude = 0;
-  qState.each(function(stateWithAmplitude) {
+  qState.each((stateWithAmplitude) => {
     const magnitude = stateWithAmplitude.amplitude.magnitude();
     accumulativeSquareAmplitudeMagnitude += magnitude * magnitude;
     randomStateString = stateWithAmplitude.index;
     if (accumulativeSquareAmplitudeMagnitude > randomNumber) {
       return false;
     }
+    return true;
   });
   return parseInt(randomStateString, 10);
 }
 
 export function bitRangeAsArray(low, high) {
   if (low > high) {
-    throw "bit range must have 'from' being less than or equal to 'to'";
+    throw new Error('bit range must have \'from\' being less than or equal to \'to\'');
   }
   const result = [];
   for (let i = low; i <= high; i++) {
@@ -91,7 +92,7 @@ export function bitRangeAsArray(low, high) {
 
 export function convertBitQualifierToBitArray(bits, numBits) {
   if (bits === null) {
-    throw "bit qualification must be supplied";
+    throw new Error('bit qualification must be supplied');
   }
   if (bits instanceof Array) {
     return bits;
@@ -105,7 +106,7 @@ export function convertBitQualifierToBitArray(bits, numBits) {
   if (bits.from !== null && bits.to !== null) {
     return bitRangeAsArray(bits.from, bits.to);
   }
-  throw "bit qualification must be either: a number, an array of numbers, Q.ALL, or {from: n, to: m}";
+  throw new Error('bit qualification must be either: a number, an array of numbers, Q.ALL, or {from: n, to: m}');
 }
 
 export function createBitMask(bits) {
@@ -122,7 +123,7 @@ export function createBitMask(bits) {
 export function padState(state, numBits) {
   const paddingLength = numBits - state.length;
   for (let i = 0; i < paddingLength; i++) {
-    state = '0' + state;
+    state = `0${state}`;
   }
   return state;
 }

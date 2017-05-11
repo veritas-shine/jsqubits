@@ -26,6 +26,7 @@ class extends Component {
 
   componentDidMount() {
     window.Q = Q;
+    Q.log = console.log;
     const area = document.getElementById('q-code');
     this.codemirror = codeMirror.fromTextArea(area, {
       lineNumbers: true,

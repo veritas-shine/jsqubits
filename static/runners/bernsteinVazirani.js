@@ -17,7 +17,7 @@ function bernsteinVazirani(f, numbits) {
         .hadamard(inputBits)
         .measure(inputBits)
         .asBitString();
-};
+}
 
 function createHiddenStringFunction(hiddenString) {
     var hiddenStringAsNumber = parseInt(hiddenString, 2);
@@ -30,7 +30,7 @@ function createHiddenStringFunction(hiddenString) {
         }
         return result;
     }
-};
+}
 
 var f = createHiddenStringFunction("01101");
 console.log("Hidden string is: " + bernsteinVazirani(f, 5));

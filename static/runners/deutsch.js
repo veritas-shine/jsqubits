@@ -4,10 +4,10 @@
  */
 
 function deutsch(f) {
-   return jsqubits('|01>').hadamard(jsqubits.ALL).applyFunction(1, 0, f).hadamard(jsqubits.ALL).measure(1).result;
+   return new Q('|01>').hadamard(Q.ALL).applyFunction(1, 0, f).hadamard(Q.ALL).measure(1).result;
 };
 
 
 var f = promptForFunction("Enter a function that maps {0,1} to {0,1}", "function(x) {return (x + 1) % 2;}");
 
-log("(f(0) + f(1)) mod 2 = " + deutsch(f));
+console.log("(f(0) + f(1)) mod 2 = " + deutsch(f));
