@@ -16,38 +16,9 @@ import AmplitudeState from './AmplitudeState';
 import Measurement from './Measurement';
 import Q from './Q';
 
-function _applyToOneBit(controlBits, targetBit, qbitFunction, qState) {
-  if (Q.DEBUG) {
-    console.log(19, controlBits, targetBit, qState.toString());
-  }
-
-  const newAmplitudes = {};
-  const statesThatCanBeSkipped = {};
-  const targetBitMask = 1 << targetBit;
-  const controlBitMask = createBitMask(controlBits);
-  qState.each(stateWithAmplitude => {
-    const state = stateWithAmplitude.asNumber();
-    if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
-    statesThatCanBeSkipped[state ^ targetBitMask] = true;
-    const indexOf1 = state | targetBitMask;
-    const indexOf0 = indexOf1 - targetBitMask;
-    if (controlBits === null || ((state & controlBitMask) === controlBitMask)) {
-      const result = qbitFunction(qState.amplitude(indexOf0), qState.amplitude(indexOf1));
-      sparseAssign(newAmplitudes, indexOf0, result.amplitudeOf0);
-      sparseAssign(newAmplitudes, indexOf1, result.amplitudeOf1);
-    } else {
-      sparseAssign(newAmplitudes, indexOf0, qState.amplitude(indexOf0));
-      sparseAssign(newAmplitudes, indexOf1, qState.amplitude(indexOf1));
-    }
-  });
-
-  return new QState(qState.numBits(), newAmplitudes);
-}
-
-
 function validateTargetBitRangesDontOverlap(controlBits, targetBits) {
   if ((controlBits.to >= targetBits.from) && (targetBits.to >= controlBits.from)) {
-    throw "control and target bits must not be the same nor overlap";
+    throw new Error('control and target bits must not be the same nor overlap');
   }
 }
 
@@ -55,7 +26,7 @@ function validateTargetBitRangesDontOverlap(controlBits, targetBits) {
 //
 function formatAmplitude(amplitude, formatFlags) {
   const amplitudeString = amplitude.format(formatFlags);
-  return amplitudeString === '1' ? '' : amplitudeString + " ";
+  return amplitudeString === '1' ? '' : `${amplitudeString} `;
 }
 
 function compareStatesWithAmplitudes(a, b) {
@@ -64,7 +35,7 @@ function compareStatesWithAmplitudes(a, b) {
 
 function sortedNonZeroStates(qState) {
   const nonZeroStates = [];
-  qState.each(function (stateWithAmplitude) {
+  qState.each((stateWithAmplitude) => {
     nonZeroStates.push(stateWithAmplitude);
   });
   nonZeroStates.sort(compareStatesWithAmplitudes);
@@ -94,7 +65,7 @@ export default class QState {
   }
 
   each(callBack) {
-    validateArgs(arguments, 1, 1, "Must supply a callback function to each()");
+    validateArgs(arguments, 1, 1, 'Must supply a callback function to each()');
     for (const index in this._amplitudes) {
       if (this._amplitudes.hasOwnProperty(index)) {
         const returnValue = callBack(new AmplitudeState(this._nb, index, this._amplitudes[index]));
@@ -109,7 +80,7 @@ export default class QState {
       amount = Complex.real(amount);
     }
     const amplitudes = {};
-    this.each(function (oldAmplitude) {
+    this.each((oldAmplitude) => {
       amplitudes[oldAmplitude.index] = oldAmplitude.amplitude.multiply(amount);
     });
     return new QState(this.numBits(), amplitudes);
@@ -117,10 +88,10 @@ export default class QState {
 
   add(otherState) {
     const amplitudes = {};
-    this.each(function (stateWithAmplitude) {
+    this.each((stateWithAmplitude) => {
       amplitudes[stateWithAmplitude.index] = stateWithAmplitude.amplitude;
     });
-    otherState.each(function (stateWithAmplitude) {
+    otherState.each((stateWithAmplitude) => {
       const existingValue = amplitudes[stateWithAmplitude.index] || Complex.ZERO;
       amplitudes[stateWithAmplitude.index] = stateWithAmplitude.amplitude.add(existingValue);
     });
@@ -133,8 +104,8 @@ export default class QState {
 
   tensorProduct(otherState) {
     const amplitudes = {};
-    this.each(function (basisWithAmplitudeA) {
-      otherState.each(function (otherBasisWithAmplitude) {
+    this.each((basisWithAmplitudeA) => {
+      otherState.each((otherBasisWithAmplitude) => {
         const newBasisState = (basisWithAmplitudeA.asNumber() << otherState.numBits()) + otherBasisWithAmplitude.asNumber();
         const newAmplitude = basisWithAmplitudeA.amplitude.multiply(otherBasisWithAmplitude.amplitude);
         amplitudes[newBasisState] = newAmplitude;
@@ -145,7 +116,7 @@ export default class QState {
 
   controlledHadamard(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledHadamard()');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       const newAmplitudeOf0 = amplitudeOf0.add(amplitudeOf1).multiply(Complex.SQRT1_2);
       const newAmplitudeOf1 = amplitudeOf0.subtract(amplitudeOf1).multiply(Complex.SQRT1_2);
       return {amplitudeOf0: newAmplitudeOf0, amplitudeOf1: newAmplitudeOf1};
@@ -159,12 +130,12 @@ export default class QState {
 
   controlledXRotation(controlBits, targetBits, angle) {
     validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and an angle, to controlledXRotation()');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       const halfAngle = angle / 2;
       const cos = Complex.real(Math.cos(halfAngle));
-      const negative_i_sin = new Complex(0, -Math.sin(halfAngle));
-      const newAmplitudeOf0 = amplitudeOf0.multiply(cos).add(amplitudeOf1.multiply(negative_i_sin));
-      const newAmplitudeOf1 = amplitudeOf0.multiply(negative_i_sin).add(amplitudeOf1.multiply(cos));
+      const nisin = new Complex(0, -Math.sin(halfAngle));
+      const newAmplitudeOf0 = amplitudeOf0.multiply(cos).add(amplitudeOf1.multiply(nisin));
+      const newAmplitudeOf1 = amplitudeOf0.multiply(nisin).add(amplitudeOf1.multiply(cos));
       return {amplitudeOf0: newAmplitudeOf0, amplitudeOf1: newAmplitudeOf1};
     });
   }
@@ -176,7 +147,7 @@ export default class QState {
 
   controlledYRotation(controlBits, targetBits, angle) {
     validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and an angle, to controlledYRotation()');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       const halfAngle = angle / 2;
       const cos = Complex.real(Math.cos(halfAngle));
       const sin = Complex.real(Math.sin(halfAngle));
@@ -193,12 +164,12 @@ export default class QState {
 
   controlledZRotation(controlBits, targetBits, angle) {
     validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and an angle to controlledZRotation()');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       const halfAngle = angle / 2;
       const cos = Complex.real(Math.cos(halfAngle));
-      const i_sin = new Complex(0, Math.sin(halfAngle));
-      const newAmplitudeOf0 = amplitudeOf0.multiply(cos.subtract(i_sin));
-      const newAmplitudeOf1 = amplitudeOf1.multiply(cos.add(i_sin));
+      const isin = new Complex(0, Math.sin(halfAngle));
+      const newAmplitudeOf0 = amplitudeOf0.multiply(cos.subtract(isin));
+      const newAmplitudeOf1 = amplitudeOf1.multiply(cos.add(isin));
       return {amplitudeOf0: newAmplitudeOf0, amplitudeOf1: newAmplitudeOf1};
     });
   }
@@ -210,11 +181,11 @@ export default class QState {
 
   controlledR(controlBits, targetBits, angle) {
     validateArgs(arguments, 3, 3, 'Must supply control and target bits, and an angle to controlledR().');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       const cos = Complex.real(Math.cos(angle));
-      const i_sin = new Complex(0, Math.sin(angle));
+      const isin = new Complex(0, Math.sin(angle));
       const newAmplitudeOf0 = amplitudeOf0;
-      const newAmplitudeOf1 = amplitudeOf1.multiply(cos.add(i_sin));
+      const newAmplitudeOf1 = amplitudeOf1.multiply(cos.add(isin));
       return {amplitudeOf0: newAmplitudeOf0, amplitudeOf1: newAmplitudeOf1};
     });
   }
@@ -226,7 +197,7 @@ export default class QState {
 
   controlledX(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to cnot() / controlledX().');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       return {amplitudeOf0: amplitudeOf1, amplitudeOf1: amplitudeOf0};
     });
   }
@@ -238,7 +209,7 @@ export default class QState {
 
   controlledY(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledY().');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
       return {
         amplitudeOf0: amplitudeOf1.multiply(new Complex(0, -1)),
         amplitudeOf1: amplitudeOf0.multiply(new Complex(0, 1))
@@ -253,8 +224,8 @@ export default class QState {
 
   controlledZ(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledZ().');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
-      return {amplitudeOf0: amplitudeOf0, amplitudeOf1: amplitudeOf1.negate()};
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
+      return {amplitudeOf0, amplitudeOf1: amplitudeOf1.negate()};
     });
   }
 
@@ -266,8 +237,8 @@ export default class QState {
   controlledS(controlBits, targetBits) {
 //        Note this could actually be implemented as controlledR(controlBits, targetBits, PI/2)
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledS().');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
-      return {amplitudeOf0: amplitudeOf0, amplitudeOf1: amplitudeOf1.multiply(new Complex(0, 1))};
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
+      return {amplitudeOf0, amplitudeOf1: amplitudeOf1.multiply(new Complex(0, 1))};
     });
   }
 
@@ -278,8 +249,8 @@ export default class QState {
 
   controlledT(controlBits, targetBits) {
     validateArgs(arguments, 2, 2, 'Must supply control and target bits to controlledT().');
-    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, function (amplitudeOf0, amplitudeOf1) {
-      return {amplitudeOf0: amplitudeOf0, amplitudeOf1: amplitudeOf1.multiply(expPiOn4)};
+    return this.controlledApplicatinOfqBitOperator(controlBits, targetBits, (amplitudeOf0, amplitudeOf1) => {
+      return {amplitudeOf0, amplitudeOf1: amplitudeOf1.multiply(expPiOn4)};
     });
   }
 
@@ -289,7 +260,7 @@ export default class QState {
   }
 
   controlledSwap(controlBits, targetBit1, targetBit2) {
-    validateArgs(arguments, 3, 3, "Must supply controlBits, targetBit1, and targetBit2 to controlledSwap()");
+    validateArgs(arguments, 3, 3, 'Must supply controlBits, targetBit1, and targetBit2 to controlledSwap()');
     const newAmplitudes = {};
     if (controlBits !== null) {
       controlBits = convertBitQualifierToBitArray(controlBits, this.numBits());
@@ -298,7 +269,7 @@ export default class QState {
     const controlBitMask = createBitMask(controlBits);
     const bit1Mask = 1 << targetBit1;
     const bit2Mask = 1 << targetBit2;
-    this.each(function (stateWithAmplitude) {
+    this.each((stateWithAmplitude) => {
       const state = stateWithAmplitude.asNumber();
       let newState = state;
       if (controlBits === null || ((state & controlBitMask) === controlBitMask)) {
@@ -312,7 +283,7 @@ export default class QState {
   }
 
   swap(targetBit1, targetBit2) {
-    validateArgs(arguments, 2, 2, "Must supply targetBit1 and targetBit2 to swap()");
+    validateArgs(arguments, 2, 2, 'Must supply targetBit1 and targetBit2 to swap()');
     return this.controlledSwap(null, targetBit1, targetBit2);
   }
 
@@ -330,6 +301,30 @@ export default class QState {
     return this.controlledX(controlBits, targetBit);
   }
 
+  static _applyToOneBit = (controlBits, targetBit, qbitFunction, qState) => {
+    const newAmplitudes = {};
+    const statesThatCanBeSkipped = {};
+    const targetBitMask = 1 << targetBit;
+    const controlBitMask = createBitMask(controlBits);
+    qState.each(stateWithAmplitude => {
+      const state = stateWithAmplitude.asNumber();
+      if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
+      statesThatCanBeSkipped[state ^ targetBitMask] = true;
+      const indexOf1 = state | targetBitMask;
+      const indexOf0 = indexOf1 - targetBitMask;
+      if (controlBits === null || ((state & controlBitMask) === controlBitMask)) {
+        const result = qbitFunction(qState.amplitude(indexOf0), qState.amplitude(indexOf1));
+        sparseAssign(newAmplitudes, indexOf0, result.amplitudeOf0);
+        sparseAssign(newAmplitudes, indexOf1, result.amplitudeOf1);
+      } else {
+        sparseAssign(newAmplitudes, indexOf0, qState.amplitude(indexOf0));
+        sparseAssign(newAmplitudes, indexOf1, qState.amplitude(indexOf1));
+      }
+    });
+
+    return new QState(qState.numBits(), newAmplitudes);
+  };
+
   controlledApplicatinOfqBitOperator(controlBits, targetBits, qbitFunction) {
     validateArgs(arguments, 3, 3, 'Must supply control bits, target bits, and qbitFunction to controlledApplicatinOfqBitOperator().');
     const targetBitArray = convertBitQualifierToBitArray(targetBits, this.numBits());
@@ -344,7 +339,7 @@ export default class QState {
     let result = this;
     for (let i = 0; i < targetBitArray.length; i++) {
       const targetBit = targetBitArray[i];
-      result = _applyToOneBit(controlBitArray, targetBit, qbitFunction, result);
+      result = QState._applyToOneBit(controlBitArray, targetBit, qbitFunction, result);
     }
     return result;
   }
@@ -360,7 +355,7 @@ export default class QState {
     const highBitMask = (1 << (inputBitRange.to + 1)) - 1;
     const targetBitMask = ((1 << (1 + targetBitRange.to - targetBitRange.from)) - 1) << targetBitRange.from;
 
-    this.each(function (stateWithAmplitude) {
+    this.each((stateWithAmplitude) => {
       const state = stateWithAmplitude.asNumber();
       if (statesThatCanBeSkipped[stateWithAmplitude.index]) return;
       const input = (state & highBitMask) >> inputBitRange.from;
@@ -381,16 +376,15 @@ export default class QState {
   normalize() {
     const amplitudes = {};
     let sumOfMagnitudeSqaures = 0;
-    this.each(function (stateWithAmplitude) {
+    this.each((stateWithAmplitude) => {
       const magnitude = stateWithAmplitude.amplitude.magnitude();
       sumOfMagnitudeSqaures += magnitude * magnitude;
     });
     const scale = Complex.real(1 / Math.sqrt(sumOfMagnitudeSqaures));
-    this.each(function (stateWithAmplitude) {
+    this.each((stateWithAmplitude) => {
       amplitudes[stateWithAmplitude.index] = stateWithAmplitude.amplitude.multiply(scale);
     });
     return new QState(this.numBits(), amplitudes);
-
   }
 
   measure(bits) {
@@ -402,14 +396,14 @@ export default class QState {
     const maskedChosenState = chosenState & bitMask;
 
     const newAmplitudes = {};
-    this.each(function (stateWithAmplitude) {
+    this.each((stateWithAmplitude) => {
       const state = stateWithAmplitude.asNumber();
       if ((state & bitMask) === maskedChosenState) {
         newAmplitudes[state] = stateWithAmplitude.amplitude;
       }
     });
 
-    // Measurement outcome is the "value" of the measured bits.
+    // Measurement outcome is the 'value' of the measured bits.
     // It probably only makes sense when the bits make an adjacent block.
     let measurementOutcome = 0;
     for (let bitIndex = numBits - 1; bitIndex >= 0; bitIndex--) {
@@ -425,8 +419,7 @@ export default class QState {
     return new Measurement(bitArray.length, measurementOutcome, newState);
   }
 
-  qft(targetBits) {
-
+  qft(targetBits1) {
     function qftfunc(qstate, targetBits) {
       const bitIndex = targetBits[0];
       if (targetBits.length > 1) {
@@ -449,20 +442,20 @@ export default class QState {
     }
 
     validateArgs(arguments, 1, 1, 'Must supply bits to be measured to qft().');
-    const targetBitArray = convertBitQualifierToBitArray(targetBits, this.numBits());
+    const targetBitArray = convertBitQualifierToBitArray(targetBits1, this.numBits());
     const newState = qftfunc(this, targetBitArray);
     return reverseBits(newState, targetBitArray);
   }
 
   eql(other) {
-
     function lhsAmplitudesHaveMatchingRhsAmplitudes(lhs, rhs) {
       let result = true;
-      lhs.each(function (stateWithAmplitude) {
+      lhs.each((stateWithAmplitude) => {
         if (!stateWithAmplitude.amplitude.eql(rhs.amplitude(stateWithAmplitude.asNumber()))) {
           result = false;
           return false;
         }
+        return true;
       });
       return result;
     }
@@ -482,14 +475,16 @@ export default class QState {
     for (let i = 0; i < nonZeroStates.length; i++) {
       if (result !== '') formatFlags.spacedSign = true;
       stateWithAmplitude = nonZeroStates[i];
-      result = result + formatAmplitude(stateWithAmplitude.amplitude, formatFlags) + "|" + stateWithAmplitude.asBitString() + ">";
+      result = `${result}${formatAmplitude(stateWithAmplitude.amplitude, formatFlags)}|${stateWithAmplitude.asBitString()}>`;
     }
     return result;
   }
 }
 
-QState.fromBits = function (bitString) {
-  validateArgs(arguments, 1, 1, 'Must supply a bit string');
+QState.fromBits = (bitString) => {
+  if (!bitString) {
+    throw new Error('Must supply a bit string');
+  }
   const parsedBitString = parseBitString(bitString);
   const amplitudes = {};
   amplitudes[parsedBitString.value] = Complex.ONE;

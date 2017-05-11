@@ -11,13 +11,13 @@
   Applying the Hadamard operator followed by the T operator to |0> gives <span id='jsqubitsResult'></span>
 </p>
 <p>
-  234<sup>756</sup> mod 15 = <span id='powerModResult'></span>
+  2<sup>2048</sup> mod 100 = <span id='powerModResult'></span>
 </p>
 <script>
   var real = jsqubits.real;
   var qstate = jsqubits('|0>').hadamard(0).T(0);
   document.getElementById("jsqubitsResult").innerHTML = qstate.toString();
-  document.getElementById("powerModResult").innerHTML = jsqubitsmath.powerMod(234, 756, 15).toString();
+  document.getElementById("powerModResult").innerHTML = jsqubitsmath.powerMod(2, 2048, 100).toString();
 
   var targetBits = {from: 0, to: 1};
   function dummy(arg1, arg2, arg3, arg4) {

@@ -43,25 +43,6 @@ export default class Q {
   };
 
   /**
-   * Greatest common divisor
-   */
-  static gcd = (a, b) => {
-    while (b !== 0) {
-      const c = a % b;
-      a = b;
-      b = c;
-    }
-    return a;
-  };
-
-  /**
-   * Least common multiple
-   */
-  static lcm = (a, b) => {
-    return a * b / this.gcd(a, b);
-  };
-
-  /**
    * Find the continued fraction representation of a number.
    * @param the value to be converted to a continued faction.
    * @param the precision with which to compute (eg. 0.01 will compute values until the fraction is at least as precise as 0.01).
@@ -130,6 +111,19 @@ export default class Q {
     }
 
     /**
+     * Zero out the values above and below the pivot (using mod 2 arithmetic).
+     */
+    function zeroOutAboveAndBelow(a, pivotColIndex, pivotRowIndex) {
+      const pivotRow = a[pivotRowIndex];
+      const colBitMask = 1 << pivotColIndex;
+      for (let rowIndex = 0; rowIndex < a.length; rowIndex++) {
+        if (rowIndex !== pivotRowIndex && (colBitMask & a[rowIndex])) {
+          a[rowIndex] = a[rowIndex] ^ pivotRow;
+        }
+      }
+    }
+
+    /**
      * Reduce 'a' to reduced row echelon form,
      * and keep track of which columns are pivot columns in pivotColumnIndexes.
      */
@@ -142,19 +136,6 @@ export default class Q {
           pivotColumnIndexes[pivotRowIndex] = pivotColIndex;
           zeroOutAboveAndBelow(a, pivotColIndex, pivotRowIndex);
           pivotRowIndex++;
-        }
-      }
-    }
-
-    /**
-     * Zero out the values above and below the pivot (using mod 2 arithmetic).
-     */
-    function zeroOutAboveAndBelow(a, pivotColIndex, pivotRowIndex) {
-      const pivotRow = a[pivotRowIndex];
-      const colBitMask = 1 << pivotColIndex;
-      for (let rowIndex = 0; rowIndex < a.length; rowIndex++) {
-        if (rowIndex !== pivotRowIndex && (colBitMask & a[rowIndex])) {
-          a[rowIndex] = a[rowIndex] ^ pivotRow;
         }
       }
     }
@@ -198,6 +179,11 @@ export default class Q {
       return specialSolutions(a, width, pivotColumnIndexes);
     };
   })();
+
+  // algorythms
+  static deutsch = (f) => {
+    return new Q('|01>').hadamard(Q.ALL).applyFunction(1, 0, f).hadamard(Q.ALL).measure(1).result;
+  };
 }
 
 /**
@@ -214,5 +200,26 @@ function powerMod(x, y, m) {
 }
 
 Q.powerMod = powerMod;
+
+/**
+ * Greatest common divisor
+ */
+Q.gcd = (a, b) => {
+  while (b !== 0) {
+    const c = a % b;
+    a = b;
+    b = c;
+  }
+  return a;
+};
+
+/**
+ * Least common multiple
+ */
+Q.lcm = (a, b) => {
+  return a * b / Q.gcd(a, b);
+};
+
+
 Q.QState = QState;
 Q.DEBUG = false;

@@ -167,7 +167,7 @@ describe('QState', function () {
       var badFunctionInvocation = function () {
         new Q("0000").controlledApplicatinOfqBitOperator({from: 0, to: 2}, {from: 2, to: 3}, testFunction);
       };
-      expect(badFunctionInvocation).toThrow("control and target bits must not be the same nor overlap");
+      expect(badFunctionInvocation).toThrow(new Error("control and target bits must not be the same nor overlap"));
     });
   });
 
@@ -602,7 +602,7 @@ describe('QState', function () {
           return x;
         });
       };
-      expect(badFunctionInvocation).toThrow("control and target bits must not be the same nor overlap");
+      expect(badFunctionInvocation).toThrow(new Error("control and target bits must not be the same nor overlap"));
     });
   });
 

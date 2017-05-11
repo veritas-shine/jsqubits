@@ -5,8 +5,8 @@
 
 function bernsteinVazirani(f, numbits) {
 //    Create a |-> state as the target qubit.
-    var targetQubit = jsqubits("|0>").subtract(jsqubits("|1>")).normalize();
-    var inputQubits = new jsqubits.QState(numbits);
+    var targetQubit = new Q("|0>").subtract(new Q("|1>")).normalize();
+    var inputQubits = new Q.QState(numbits);
     var initialState = inputQubits.tensorProduct(targetQubit);
 
     var inputBits = {from: 1, to: numbits};

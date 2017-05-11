@@ -20,11 +20,12 @@ class extends Component {
       result: ''
     };
 
-    const qstate = new Q('|0>').hadamard(0).T(0);
-    console.log(24, qstate.toString(), Q.powerMod(234, 756, 15).toString());
+    // const qstate = new Q('|0>').hadamard(0).T(0);
+    // console.log(24, qstate.toString(), Q.powerMod(234, 756, 15).toString());
   }
 
   componentDidMount() {
+    window.Q = Q;
     const area = document.getElementById('q-code');
     this.codemirror = codeMirror.fromTextArea(area, {
       lineNumbers: true,
@@ -34,7 +35,7 @@ class extends Component {
 
   _onChange = (event) => {
     const {value} = event.target;
-    const req = superagent.get(`/runners/${value}.js.example`);
+    const req = superagent.get(`/runners/${value}.js`);
     req.end((error, {text}) => {
       this.codemirror.setValue(text);
     });

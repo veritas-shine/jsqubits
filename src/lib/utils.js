@@ -57,7 +57,7 @@ export function validateControlAndTargetBitsDontOverlap(controlBits, targetBits)
     const controlBit = controlBits[i];
     for (let j = 0; j < targetBits.length; j++) {
       if (controlBit === targetBits[j]) {
-        throw "control and target bits must not be the same nor overlap";
+        throw new Error("control and target bits must not be the same nor overlap");
       }
     }
   }
